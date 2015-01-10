@@ -26,3 +26,10 @@
 *.exe
 *.out
 *.app
+
+.ino.cpp
+Libraries/
+Release
+spec.d
+**/.DS_Store
+arduino/
