@@ -32,9 +32,24 @@
 			<locationURI>ArduinoHardwareLibPath/Audio</locationURI>
 		</link>
 		<link>
+			<name>Libraries/Encoder</name>
+			<type>2</type>
+			<locationURI>ArduinoPivateLibPath/Encoder</locationURI>
+		</link>
+		<link>
 			<name>Libraries/ILI9341_t3</name>
 			<type>2</type>
 			<locationURI>ArduinoHardwareLibPath/ILI9341_t3</locationURI>
+		</link>
+		<link>
+			<name>Libraries/OneButton</name>
+			<type>2</type>
+			<locationURI>ArduinoPivateLibPath/OneButton</locationURI>
+		</link>
+		<link>
+			<name>Libraries/RotaryEncoderWithButton</name>
+			<type>2</type>
+			<locationURI>ArduinoPivateLibPath/RotaryEncoderWithButton</locationURI>
 		</link>
 		<link>
 			<name>Libraries/SD</name>
@@ -45,6 +60,11 @@
 			<name>Libraries/SPI</name>
 			<type>2</type>
 			<locationURI>ArduinoHardwareLibPath/SPI</locationURI>
+		</link>
+		<link>
+			<name>Libraries/Shifter</name>
+			<type>2</type>
+			<locationURI>ArduinoPivateLibPath/Shifter</locationURI>
 		</link>
 		<link>
 			<name>Libraries/SimpleTimer</name>

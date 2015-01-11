@@ -5,7 +5,9 @@
 #define ARM_MATH_CM4
 #include <arm_math.h>
 #include <SimpleTimer.h>
-
+#include <RotaryEncoderWithButton.h>
+#include <OneButton.h>
+#include <Shifter.h>
 // Local includes
 #include "Hardware.h"
 #include "ColorScheme.h"
@@ -38,11 +40,53 @@ AudioConnection patchCord2(i2s1, 1, i2s2, 1);
 #endif
 
 AudioControlSGTL5000 audioShield;
-
-const int myInput = AUDIO_INPUT_LINEIN;
-//const int myInput = AUDIO_INPUT_MIC;
-
 SimpleTimer timer(1);
+
+#ifdef ENABLE_ROTARY_ENC
+RotaryEncoderWithButton encoder(
+        config.pinRotaryA,
+        config.pinRotaryB,
+        config.pinButton,
+        false);
+
+const OneButton *button = encoder.getButton();
+#endif
+
+#ifdef ENABLE_SHIFT_REGISTER
+
+Shifter shifter(config.pinShifterSerial,
+        config.pinShifterRclk,
+        config.pinShifterSrclk,
+        config.numRegisters);
+
+#endif
+
+namespace State {
+    typedef enum SystemMode_e {
+        LedOn    = (1 << 0),
+        LedOff   = (1 << 1),
+        Last     = (1 << 2)
+    } SystemMode;
+};
+
+State::SystemMode state = State::LedOn, firstState = State::LedOn;
+
+void modeChange() {
+    state = (State::SystemMode) ((int) state << 1);
+    switch(state) {
+    case State::LedOn:
+        break;
+    case State::LedOff:
+#ifdef ENABLE_SHIFT_REGISTER
+        shifter.clear();
+        shifter.write();
+#endif
+        break;
+    case State::Last:
+        state = firstState;
+        break;
+    }
+}
 
 void periodicUpdates(int timerId) {
 #ifdef ENABLE_TFT
@@ -57,7 +101,7 @@ void setup() {
 
     // Enable the audio shield and set the output volume.
     audioShield.enable();
-    audioShield.inputSelect(myInput);
+    audioShield.inputSelect(config.audioInput);
     audioShield.volume(0.6);
 
 #if defined(ENABLE_SPECTRUM) && defined(ENABLE_TFT)
@@ -67,6 +111,14 @@ void setup() {
     tftHelper.begin();
 #endif
 
+#ifdef ENABLE_SHIFT_REGISTER
+    shifter.clear();
+    shifter.write();
+#endif
+
+#ifdef ENABLE_ROTARY_ENC
+    encoder.getButton()->attachClick(modeChange);
+#endif
     timer.setInterval(1000, periodicUpdates);
 }
 
@@ -75,6 +127,14 @@ void loop() {
 #if defined(ENABLE_SPECTRUM) && defined(ENABLE_TFT)
     spectrumAnalyzer.show();
     peakMeter.show(&tftHelper);
+#endif
+
+#ifdef ENABLE_SHIFT_REGISTER
+    peakMeter.show(&shifter);
+#endif
+
+#ifdef ENABLE_ROTARY_ENC
+    encoder.tick();
 #endif
 }
 
