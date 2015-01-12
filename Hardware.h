@@ -32,19 +32,27 @@ typedef struct hardwareConfig_s{
     uint8_t numRegisters;
     int audioInput;
 
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+
 } HardwareConfig;
 
 const static HardwareConfig config = {
-        29,     // button
-        30,     // rotaryA
-        31,     // rotaryB
+        26,     // button
+        25,     // rotaryA
+        24,     // rotaryB
 
         3,      // SER_IN
         4,      // L_CLOCK
         5,      // CLOCK
 
         3,
-        AUDIO_INPUT_LINEIN   // or AUDIO_INPUT_MIC
+        AUDIO_INPUT_LINEIN, // or AUDIO_INPUT_MIC,
+
+        21,     // red
+        22,     // green
+        23      // blue
 };
 
 
