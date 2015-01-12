@@ -22,6 +22,7 @@
 #include "Mode.h"
 #include "StatusLED.h"
 #include "Debug.h"
+#include "LCDDebug.h"
 
 // Local Hardware
 #ifdef ENABLE_TFT
@@ -85,6 +86,8 @@ float volume = 0.6;
     elapsedMillis rotationDetected;
 #endif
 
+LCDDebug debug;
+
 // =======================================================================================
 
 void periodicUpdates(int timerId) {
@@ -94,7 +97,7 @@ void periodicUpdates(int timerId) {
 }
 
 void modeChange() {
-    Serial.println("CLICK!");
+    debug.print("Button clicked!");
     #if defined(ENABLE_ROTARY_ENC) && defined(ENABLE_PEAKS)
         mode.next();
     #endif
@@ -107,7 +110,8 @@ void setup() {
     #endif
     Serial.begin(9600);
     AudioMemory(12);
-
+    debug.init();
+    debug.print("Setup Starting...");
     // Enable the audio shield and set the output volume.
     audioShield.enable();
     audioShield.inputSelect(config.audioInput);
@@ -130,7 +134,7 @@ void setup() {
         rotationDetected = 1001;
         mode.begin();
     #endif
-
+    debug.print("Setup completed.");
     timer.setInterval(1000, periodicUpdates);
 }
 
@@ -158,6 +162,8 @@ void loop() {
         if (abs(newVolume - volume) > 0) {
             volume = newVolume;
             audioShield.volume(volume);
+            sprintf(buf, "Volume: %d%%", (int) (100.0 * volume));
+            debug.stickyPrint(buf, 0);
         }
         peakMeter->showValue(volume);
     }
