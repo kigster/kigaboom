@@ -22,7 +22,6 @@ extern colorScheme_t colors;
 
 class SpectrumAnalyzer {
      AudioAnalyzeFFT1024 &_fft1024;
-     TFTHelper &_tftHelper;
 
     // An array to hold the 16 frequency bands
     float _level[16];
@@ -32,15 +31,14 @@ class SpectrumAnalyzer {
     // looks more pleasing to corresponds to human sound perception.
     int _shown[16];
 public:
-    SpectrumAnalyzer( AudioAnalyzeFFT1024 &fft1024,  TFTHelper &tftHelper) :
-        _fft1024(fft1024), _tftHelper(tftHelper) {};
+    SpectrumAnalyzer( AudioAnalyzeFFT1024 &fft1024) : _fft1024(fft1024) {};
 
-    void drawSpectrumMeter(short index, float value) {
-        _tftHelper.drawVerticalBar(20, 60, value, index, 30, 10, 5,
+    void drawSpectrumMeter(TFTHelper &tftHelper, short index, float value) {
+        tftHelper.drawVerticalBar(20, 60, value, index, 30, 10, 5,
                 colors.spectrumBar, colors.background);
     }
 
-    void show() {
+    void show(TFTHelper &tftHelper) {
         if (_fft1024.available()) {
             // read the 512 FFT frequencies into 16 _levels
             // music is heard in octaves, but the FFT data
@@ -64,14 +62,11 @@ public:
             _level[15] = _fft1024.read(360, 511);
 
             for (int i = 0; i < 16; i++) {
-                drawSpectrumMeter(i, _level[i] * 2);
+                drawSpectrumMeter(tftHelper, i, _level[i] * 2);
             }
         }
     }
 
-    void drawPeakMeter(short channel, float value) {
-        _tftHelper.drawVerticalBar(35, 60, value, channel, 140, 120, 10, colors.background, colors.peakBar);
-    }
 
 };
 

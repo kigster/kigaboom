@@ -30,13 +30,13 @@ AudioConnection patchCord2(i2s1, 1, i2s2, 1);
 #ifdef ENABLE_TFT
     TFTHelper tftHelper;
 #endif
-#if defined(ENABLE_SPECTRUM) && defined(ENABLE_TFT)
+#if defined(ENABLE_SPECTRUM)
     AudioMixer4 mixer1;
     AudioAnalyzeFFT1024 fft1024;
     AudioConnection patchCord5(mixer1, fft1024);
     AudioConnection patchCord7(i2s1, 0, mixer1, 0);
     AudioConnection patchCord8(i2s1, 1, mixer1, 1);
-    SpectrumAnalyzer spectrumAnalyzer(fft1024, tftHelper);
+    SpectrumAnalyzer spectrumAnalyzer(fft1024);
 #endif
 
 AudioControlSGTL5000 audioShield;
@@ -124,13 +124,14 @@ void setup() {
 
 void loop() {
     timer.run();
+
 #if defined(ENABLE_SPECTRUM) && defined(ENABLE_TFT)
-    spectrumAnalyzer.show();
-    peakMeter.show(&tftHelper);
+    spectrumAnalyzer.show(tftHelper);
+    peakMeter.show(tftHelper);
 #endif
 
 #ifdef ENABLE_SHIFT_REGISTER
-    peakMeter.show(&shifter);
+    peakMeter.show(shifter);
 #endif
 
 #ifdef ENABLE_ROTARY_ENC

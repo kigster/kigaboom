@@ -45,28 +45,31 @@ public:
         }
         return _peaks;
     }
+
 #ifdef ENABLE_TFT
-    void show(TFTHelper *tftHelper) {
+    void show(TFTHelper &tftHelper) {
         update();
-        tftHelper->drawVerticalBar(35, 60, _peaks.left, 0, 140, 120, 10,
+        tftHelper.drawVerticalBar(35, 60, _peaks.left, 0, 140, 120, 10,
                 colors.peakBar, colors.background);
-        tftHelper->drawVerticalBar(35, 60, _peaks.left, 1, 140, 120, 10,
+        tftHelper.drawVerticalBar(35, 60, _peaks.right, 1, 140, 120, 10,
                 colors.peakBar, colors.background);
     }
 #endif
-#ifdef ENABLE_SHIFT_REGISTER
 
-    void show(Shifter *shifter) {
-        if (lastLedUpdate > 30) {
+#ifdef ENABLE_SHIFT_REGISTER
+    void show(Shifter &shifter) {
+        if (lastLedUpdate > 24) {
             lastLedUpdate = 0;
             update();
             drawPeak(shifter, 0, _peaks.left);
             drawPeak(shifter, 1, _peaks.right);
-            shifter->write();
+            shifter.write();
         }
     }
 #endif
-    void printPeaksToSerial() {
+
+    // Version without params for Serial
+    void show() {
         uint8_t leftPeak = _peaks.left * 30.0;
         uint8_t rightPeak = _peaks.right * 30.0;
         for (cnt = 0; cnt < 30 - leftPeak; cnt++) {
@@ -94,11 +97,10 @@ private:
     elapsedMillis lastLedUpdate;
 
 #ifdef ENABLE_SHIFT_REGISTER
-    void drawPeak(Shifter *shifter, short channel, float volume) {
-//        volume = random(10) / 10.0;
+    void drawPeak(Shifter &shifter, short channel, float volume) {
         short bar = volume * 10;
         for (int i = channel * 10; i < (channel + 1) * 10; i ++) {
-            shifter->setPin(i,  (i - channel * 10 <= bar) ? HIGH : LOW);
+            shifter.setPin(i,  (i - channel * 10 <= bar) ? HIGH : LOW);
         }
     }
 #endif
