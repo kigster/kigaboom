@@ -42,6 +42,11 @@
 			<locationURI>ArduinoHardwareLibPath/ILI9341_t3</locationURI>
 		</link>
 		<link>
+			<name>Libraries/IRremote</name>
+			<type>2</type>
+			<locationURI>ArduinoHardwareLibPath/IRremote</locationURI>
+		</link>
+		<link>
 			<name>Libraries/LiquidCrystal_I2C2004V1</name>
 			<type>2</type>
 			<locationURI>ArduinoPivateLibPath/LiquidCrystal_I2C2004V1</locationURI>

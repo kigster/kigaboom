@@ -2,12 +2,15 @@
 #include <Wire.h>
 #include <SPI.h>
 #include <SD.h>
+#include <IRremote.h>
 #define ARM_MATH_CM4
 #include <arm_math.h>
 #include <SimpleTimer.h>
 #include <RotaryEncoderWithButton.h>
 #include <OneButton.h>
 #include <Shifter.h>
+
+
 // Local includes
 #include "Hardware.h"
 #include "ColorScheme.h"
@@ -23,6 +26,7 @@
 #include "StatusLED.h"
 #include "Debug.h"
 #include "LCDDebug.h"
+
 
 // Local Hardware
 #ifdef ENABLE_TFT
@@ -83,21 +87,38 @@ float volume = 0.6;
 
     StatusLED led(shifter, config.red, config.green, config.blue);
     Mode mode(rotary, rotary.button, shifter, peakMeter, led);
-    elapsedMillis rotationDetected;
+    elapsedMillis lastKnobRotationTimestamp;
 #endif
 
 LCDDebug debug;
-
+static short currentStatus = 0;
+short statusRefreshEvery = 5, numStatuses = 3;
 // =======================================================================================
 
 void periodicUpdates(int timerId) {
     #ifdef ENABLE_TFT
         tftHelper.drawStatusBar();
     #endif
+    char floatValue1[10], floatValue2[10];
+    switch(currentStatus / statusRefreshEvery) {
+        case 0:
+            ftoa(floatValue1, AudioProcessorUsage(), 2);
+            ftoa(floatValue2, AudioProcessorUsageMax(), 2);
+            sprintf(buf, "CPU: %s%% MAX: %s%%", floatValue1, floatValue2);
+            break;
+        case 1:
+            sprintf(buf, "MEM: %d(BLK) MAX: %d", AudioMemoryUsage(), AudioMemoryUsageMax());
+            break;
+        case 2:
+            ftoa(floatValue1, peak_L.processorUsage() + peak_R.processorUsage(), 2);
+            sprintf(buf, "Peak Meter CPU: %s%%", floatValue1);
+            break;
+    }
+    debug.overwrite(buf, 3);
+    currentStatus++; currentStatus = currentStatus % (numStatuses * statusRefreshEvery);
 }
 
 void modeChange() {
-    debug.print("Button clicked!");
     #if defined(ENABLE_ROTARY_ENC) && defined(ENABLE_PEAKS)
         mode.next();
     #endif
@@ -111,7 +132,7 @@ void setup() {
     Serial.begin(9600);
     AudioMemory(12);
     debug.init();
-    debug.print("Setup Starting...");
+    debug.print("Setup starting...");
     // Enable the audio shield and set the output volume.
     audioShield.enable();
     audioShield.inputSelect(config.audioInput);
@@ -131,7 +152,7 @@ void setup() {
 
     #ifdef ENABLE_ROTARY_ENC
         rotary.button.attachClick(modeChange);
-        rotationDetected = 1001;
+        lastKnobRotationTimestamp = 1001;
         mode.begin();
     #endif
     debug.print("Setup completed.");
@@ -145,7 +166,7 @@ void loop() {
     #endif
 
     #ifdef ENABLE_PEAKS
-        if (rotationDetected > 1000)
+        if (lastKnobRotationTimestamp > 1000)
             peakMeter->show();
     #endif
 
@@ -155,7 +176,7 @@ void loop() {
 
     int d = rotary.delta();
     if (d != 0) {
-        rotationDetected = 0;
+        lastKnobRotationTimestamp = 0;
         float newVolume = volume + 0.01 * d;
         if (newVolume < 0) newVolume = 0;
         if (newVolume > 0.9) newVolume = 0.9;
@@ -163,7 +184,7 @@ void loop() {
             volume = newVolume;
             audioShield.volume(volume);
             sprintf(buf, "Volume: %d%%", (int) (100.0 * volume));
-            debug.stickyPrint(buf, 0);
+            debug.overwrite(buf, 2);
         }
         peakMeter->showValue(volume);
     }

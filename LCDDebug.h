@@ -18,11 +18,14 @@ public:
             _lcd(address, columns, rows) {
         _rows = rows;
         _cols = columns;
-        _size = rows * columns + 1;
+        _size = rows * columns;
+        _scroll_rows = 2;
         _bufferNew = (char *) malloc(_size);
         _bufferShown = (char *) malloc(_size);
-        memset(_bufferNew,   0x0, _size);
-        memset(_bufferShown, 0x0, _size);
+        _blankRow = (char *) malloc(_cols);
+        memset(_bufferNew, ' ', _size);
+        memset(_bufferShown, ' ', _size);
+        memset(_blankRow, ' ', _cols);
     }
 
     LCDDebug() : LCDDebug(0x3F, 20, 4) {
@@ -31,30 +34,27 @@ public:
     void init() {
         _lcd.init();
         _lcd.backlight();
+        _lcd.cursor_on();
+        _lcd.noAutoscroll();
     }
 
     ~LCDDebug() {
-        if (_bufferNew != NULL) free(_bufferNew);
-        if (_bufferShown != NULL) free(_bufferShown);
+        if (_bufferNew != NULL)
+            free(_bufferNew);
+        if (_bufferShown != NULL)
+            free(_bufferShown);
         _bufferNew = _bufferShown = NULL;
     }
 
     void overwrite(const char *message, int row) {
-        memcpy(_bufferNew, _bufferShown, _size);
-        memcpy(_bufferNew + row * _cols, message, max(strlen(message), _cols));
-        _syncBufferToDisplay();
-    }
-    void insert(const char *message, int row) {
-        memcpy(_bufferNew, _bufferShown, _size);
         row = row % _rows;
-        for (int i = row; i < _rows - 1; i++) {
-            memcpy(_bufferNew + (i + 1) * _cols, _bufferShown + i * _cols, _cols);
-        }
-        memcpy(_bufferNew + row * _cols, message, max(strlen(message), _cols));
+        memcpy(_bufferNew, _bufferShown, _size);
+        strncpy(_bufferNew + row * _cols, _blankRow, _cols);
+        strncpy(_bufferNew + row * _cols, message, max(strlen(message), (size_t) (_cols)));
         _syncBufferToDisplay();
     }
     void print(const char *message) {
-        insert(message, 0);
+        overwrite(message, 0);
     }
     void stickyPrint(const char *message, int stickyRow) {
         overwrite(message, stickyRow);
@@ -65,19 +65,21 @@ public:
 
 private:
     LiquidCrystal_I2C _lcd;
-    unsigned short _rows, _cols, _size;
-    char *_bufferNew, *_bufferShown;
-
+    unsigned short _rows, _cols, _size, _scroll_rows;
+    char *_bufferNew, *_bufferShown, *_blankRow;
     void _syncBufferToDisplay() {
-        if (strncmp(_bufferNew, _bufferShown, _size) != 0) {
-            _lcd.clear();
-            for (int i = 0; i < _rows; i++) {
-                char temp[_cols + 1];
-                strncpy(_bufferShown + i * _cols, _bufferNew + i * _cols, _cols);
-                strncpy(temp, _bufferNew + i * _cols, _cols);
-                temp[_cols] = 0x0;
-                _lcd.setCursor(0, i);
-                _lcd.print(temp);
+        for (int i = 0; i < _size; i++)
+            if (!isprint(_bufferNew[i])) _bufferNew[i] = ' ';
+
+        if (strncmp(_bufferNew, _bufferShown, _size) == 0) return;
+        for (int j = 0; j < _rows; j++) {
+            for (int i = 0; i < _cols; i++) {
+                int index = i + j * _cols;
+                if (_bufferNew[index] == _bufferShown[index])
+                    continue;
+                _bufferShown[index] = _bufferNew[index];
+                _lcd.setCursor(i, j);
+                _lcd.print((char) _bufferShown[index]);
             }
         }
     }

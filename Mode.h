@@ -71,12 +71,12 @@ private:
                 _mode = initialMode;
                 // no break;
             case State::PeakMeterOn:
-                log("mode %d, turning meters on\n", (int) _mode);
+                log("mode %d, peaks [on]", (int) _mode);
                 _peakMeter->on();
                 _led.rgb(LED_GREEN | LED_BLUE);
                 break;
             case State::PeakMeterOff:
-                log("mode %d, turning meters off\n", (int) _mode);
+                log("mode %d, peaks [off]", (int) _mode);
                 _peakMeter->off();
                 _led.rgb(LED_RED | LED_GREEN);
                 break;
